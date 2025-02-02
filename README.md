@@ -1,4 +1,4 @@
-# Reverse-Engineered Alpha Innotec Heating Curve Calculator  
+# Reverse-Engineered Alpha Innotec Heating Curve Calculator (NOT RELATED TO ALPHA INNOTEC OR NOVELAN)
 🔗 Try it Online: https://ait-heatcurve-tool.onrender.com  
 ![Preview](https://github.com/Duke194/ait_heatcurve_tool/blob/main/ait_heatcurve_tool.gif?raw=true)
 
