@@ -1,6 +1,5 @@
 # Reverse-Engineered Alpha Innotec Heating Curve Calculator  
-🔗 Try it Online: [Insert your Render.com link here]  
-
+🔗 Try it Online: https://ait-heatcurve-tool.onrender.com  
 ## Englisch  
 This tool is a reverse-engineered calculator designed to determine the heating curves used in Alpha Innotec heat pumps with the Luxtronik 2.0 controller. It allows users to adjust the endpoint (target temperature at -20°C) and the footpoint (parallel shift of the curve) to visualize the resulting heating curve.  
 
