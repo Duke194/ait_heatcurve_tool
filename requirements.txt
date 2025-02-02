@@ -1,0 +1,4 @@
+dash
+gunicorn
+numpy
+plotly
