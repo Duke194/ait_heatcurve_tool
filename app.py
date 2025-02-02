@@ -6,8 +6,9 @@ import numpy as np
 # Dark Mode Template & Farben
 dark_theme = "plotly_dark"
 background_color = "#1E1E1E"
-curve_colors = ["#FF9100", "#00CC66", "#FF3333", "#3399FF"]
+curve_colors = ["#FF4343", "#FF9100", "#FFEA00",  "#FF3DF2"]
 dashed_line_color = "#AAAAAA"
+vertical_zero_line_color = "#3BAAFF"  # 0°C Linie
 
 heating_labels = [
     "Rücklaufsolltemperatur Heizkreis",
@@ -149,6 +150,10 @@ def update_graph(selected_curve, active_curves, endpoint, fusspunkt, current_sel
     T_out_base = np.linspace(-55, 20, 400)
     fig = go.Figure()
 
+    # Vertikale 0°C Linie dicker & farbig
+    fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=70,
+                  line=dict(color=vertical_zero_line_color, width=2, dash="dot"))
+
     for i in active_curves:
         ep = curve_values[i]['endpoint']
         fp = curve_values[i]['footpoint']
@@ -161,21 +166,23 @@ def update_graph(selected_curve, active_curves, endpoint, fusspunkt, current_sel
             x=T_out_shifted, y=T_set_shifted, mode='lines',
             name=f"{heating_labels[i]}",
             line=dict(color=curve_colors[i], width=3),
-            hoverinfo='x+y'
+            hoverinfo='x+y',
+            # Nur 0.5°C Werte anzeigen
+            hovertemplate='T_außen: %{x:.1f}°C, T_soll: %{y:.1f}°C'
         ))
 
         fig.add_trace(go.Scatter(
             x=[endpoint_x], y=[endpoint_y], mode='markers+text',
             marker=dict(size=10, color=curve_colors[i]),
-            text=[f"EP: {endpoint_y:.1f}°C"],
+            hoverinfo='skip',
             textposition='bottom right',
             name=f"Endpunkt ({ep}°C)"
         ))
 
         fig.add_trace(go.Scatter(
             x=[fp], y=[fp], mode='markers+text',
+            hoverinfo='skip',
             marker=dict(size=10, color=curve_colors[i]),
-            text=[f"FP: {fp}°C"],
             textposition='top center',
             name=f"Fußpunkt ({fp}°C)"
         ))
