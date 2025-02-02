@@ -11,6 +11,7 @@ footpoint_color = "#007BFF"
 endpoint_color = "#FF4500"
 dashed_line_color = "#AAAAAA"
 
+
 def heating_curve_base(T_out, endpoint_base, fusspunkt_base=20):
     T_fp = fusspunkt_base
     T_ep = endpoint_base
@@ -18,6 +19,7 @@ def heating_curve_base(T_out, endpoint_base, fusspunkt_base=20):
 
     norm_factor = 1 - np.exp((-20 - T_fp) / tau)
     return T_fp + (T_ep - T_fp) * (1 - np.exp((T_out - T_fp) / tau)) / norm_factor
+
 
 def heating_curve_shifted(T_out_base, endpoint_base, fusspunkt):
     fusspunkt_base = 20
@@ -31,6 +33,7 @@ def heating_curve_shifted(T_out_base, endpoint_base, fusspunkt):
 
     return T_out_shifted, T_set_shifted
 
+
 # Dash App
 app = dash.Dash(__name__)
 server = app.server  # WICHTIG für Render-Hosting
@@ -41,7 +44,8 @@ app.layout = html.Div([
 
     html.Div([
         html.Div([
-            html.Label("Endpunkt (Solltemperatur bei -20°C Außentemperatur)", style={"color": "white"}),
+            html.Label(
+                "Endpunkt (Solltemperatur bei -20°C Außentemperatur)", style={"color": "white"}),
             dcc.Slider(
                 id='endpoint-slider',
                 min=20, max=70, step=0.5, value=50,
@@ -65,6 +69,7 @@ app.layout = html.Div([
     dcc.Graph(id='heating-curve-graph', config={'displayModeBar': False})
 ], style={"backgroundColor": background_color, "padding": "20px"})
 
+
 @app.callback(
     Output('heating-curve-graph', 'figure'),
     Input('endpoint-slider', 'value'),
@@ -72,7 +77,8 @@ app.layout = html.Div([
 )
 def update_graph(endpoint, fusspunkt):
     T_out_base = np.linspace(-55, 20, 400)
-    T_out_shifted, T_set_shifted = heating_curve_shifted(T_out_base, endpoint, fusspunkt)
+    T_out_shifted, T_set_shifted = heating_curve_shifted(
+        T_out_base, endpoint, fusspunkt)
 
     endpoint_x = -20
     endpoint_y = np.interp(endpoint_x, T_out_shifted, T_set_shifted)
