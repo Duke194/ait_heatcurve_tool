@@ -44,8 +44,8 @@ app.layout = html.Div([
             html.Label("Endpunkt (Solltemperatur bei -20°C Außentemperatur)", style={"color": "white"}),
             dcc.Slider(
                 id='endpoint-slider',
-                min=30, max=70, step=0.5, value=50,
-                marks={i: f'{i}°C' for i in range(30, 71, 5)},
+                min=20, max=70, step=0.5, value=50,
+                marks={i: f'{i}°C' for i in range(20, 71, 5)},
                 tooltip={"placement": "top", "always_visible": True}
             )
         ], style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
