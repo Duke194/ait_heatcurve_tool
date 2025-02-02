@@ -5,15 +5,13 @@ import numpy as np
 
 # Dark Mode Template & Farben
 dark_theme = "plotly_dark"
-background_color = "#1E1E1E"  # Passend zum Plotly Dark Theme
-curve_color = "#FF9100"  # Cyan für die Heizkurve
-footpoint_color = "#007BFF"  # Blau für den Fußpunkt
-endpoint_color = "#FF4500"  # Rot für den Endpunkt
-dashed_line_color = "#AAAAAA"  # Grau für gestrichelte Linie
-
+background_color = "#1E1E1E"
+curve_color = "#FF9100"
+footpoint_color = "#007BFF"
+endpoint_color = "#FF4500"
+dashed_line_color = "#AAAAAA"
 
 def heating_curve_base(T_out, endpoint_base, fusspunkt_base=20):
-    """ Berechnet die Heizkurve mit Endpunkt exakt bei (-20 | endpoint_base). """
     T_fp = fusspunkt_base
     T_ep = endpoint_base
     tau = (T_fp + 20) / 3
@@ -21,9 +19,7 @@ def heating_curve_base(T_out, endpoint_base, fusspunkt_base=20):
     norm_factor = 1 - np.exp((-20 - T_fp) / tau)
     return T_fp + (T_ep - T_fp) * (1 - np.exp((T_out - T_fp) / tau)) / norm_factor
 
-
 def heating_curve_shifted(T_out_base, endpoint_base, fusspunkt):
-    """ Berechnet die Parallelverschiebung der Heizkurve. """
     fusspunkt_base = 20
     T_set_base = heating_curve_base(T_out_base, endpoint_base, fusspunkt_base)
 
@@ -35,9 +31,9 @@ def heating_curve_shifted(T_out_base, endpoint_base, fusspunkt):
 
     return T_out_shifted, T_set_shifted
 
-
 # Dash App
 app = dash.Dash(__name__)
+server = app.server  # WICHTIG für Render-Hosting
 
 app.layout = html.Div([
     html.H1("Rekonstruierte Alpha Innotec Heizkurven – Alle Angaben ohne Gewähr",
@@ -45,8 +41,7 @@ app.layout = html.Div([
 
     html.Div([
         html.Div([
-            html.Label(
-                "Endpunkt (Solltemperatur bei -20°C Außentemperatur)", style={"color": "white"}),
+            html.Label("Endpunkt (Solltemperatur bei -20°C Außentemperatur)", style={"color": "white"}),
             dcc.Slider(
                 id='endpoint-slider',
                 min=30, max=70, step=0.5, value=50,
@@ -70,17 +65,14 @@ app.layout = html.Div([
     dcc.Graph(id='heating-curve-graph', config={'displayModeBar': False})
 ], style={"backgroundColor": background_color, "padding": "20px"})
 
-
 @app.callback(
     Output('heating-curve-graph', 'figure'),
     Input('endpoint-slider', 'value'),
     Input('fusspunkt-slider', 'value')
 )
 def update_graph(endpoint, fusspunkt):
-    """ Aktualisiert die Heizkurve. """
     T_out_base = np.linspace(-55, 20, 400)
-    T_out_shifted, T_set_shifted = heating_curve_shifted(
-        T_out_base, endpoint, fusspunkt)
+    T_out_shifted, T_set_shifted = heating_curve_shifted(T_out_base, endpoint, fusspunkt)
 
     endpoint_x = -20
     endpoint_y = np.interp(endpoint_x, T_out_shifted, T_set_shifted)
@@ -118,16 +110,12 @@ def update_graph(endpoint, fusspunkt):
     ))
 
     fig.update_layout(
-        xaxis=dict(
-            title="Außentemperatur (°C)",
-            range=[-20, 40], tickmode="array",
-            tickvals=list(range(-20, 45, 5)), fixedrange=True,
-            tickfont=dict(color='white')
-        ),
-        yaxis=dict(
-            title="Solltemperatur (°C)",
-            range=[0, 70], fixedrange=True, tickfont=dict(color='white')
-        ),
+        xaxis=dict(title="Außentemperatur (°C)",
+                   range=[-20, 40], tickmode="array",
+                   tickvals=list(range(-20, 45, 5)), fixedrange=True,
+                   tickfont=dict(color='white')),
+        yaxis=dict(title="Solltemperatur (°C)",
+                   range=[0, 70], fixedrange=True, tickfont=dict(color='white')),
         template=dark_theme,
         plot_bgcolor=background_color,
         paper_bgcolor=background_color,
