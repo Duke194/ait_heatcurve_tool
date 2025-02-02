@@ -1,0 +1,35 @@
+body {
+  margin: 0px;
+  background-color: #1e1e1e;
+}
+
+.Select-control,
+.is-open > .Select-control,
+.Select-menu {
+  background-color: #424242;
+}
+
+.Select-value {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+}
+
+.Select-value-label {
+  color: white !important;
+}
+
+#curve-toggle {
+  display: flex;
+  flex-direction: column;
+}
+
+.selection-container {
+  display: flex;
+  justify-content: space-evenly;
+  text-align: center;
+}
+
+.select-heatcurve-container {
+  width: 300px;
+}

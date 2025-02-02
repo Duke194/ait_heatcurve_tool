@@ -16,12 +16,14 @@ heating_labels = [
     "Vorlaufsolltemperatur Mischkreis 3"
 ]
 
+
 def heating_curve_base(T_out, endpoint_base, fusspunkt_base=20):
     T_fp = fusspunkt_base
     T_ep = endpoint_base
     tau = (T_fp + 20) / 3
     norm_factor = 1 - np.exp((-20 - T_fp) / tau)
     return T_fp + (T_ep - T_fp) * (1 - np.exp((T_out - T_fp) / tau)) / norm_factor
+
 
 def heating_curve_shifted(T_out_base, endpoint_base, fusspunkt):
     fusspunkt_base = 20
@@ -32,67 +34,107 @@ def heating_curve_shifted(T_out_base, endpoint_base, fusspunkt):
     T_set_shifted = np.clip(T_set_base + shift_y, 0, 70)
     return T_out_shifted, T_set_shifted
 
+
 # Dash App
 app = dash.Dash(__name__)
 server = app.server  # WICHTIG für Render-Hosting
 
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Heizkurven Visualisierung</title>
+    <link rel="stylesheet" href="/assets/custom.css">
+    <link rel="stylesheet" href="/assets/mdl_blue-grey_deep-orange.min.css">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+</head>
+<body>
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+        <main class="mdl-layout__content">
+            <div class="page-content">
+                {%app_entry%}
+            </div>
+        </main>
+    </div>
+    {%config%}
+    {%scripts%}
+    {%renderer%}
+</body>
+</html>
+'''
+
 # Speicher für Heizkurven-Werte
-curve_values = {i: {'endpoint': 50, 'footpoint': 20} for i in range(len(heating_labels))}
+curve_values = {i: {'endpoint': 50, 'footpoint': 20}
+                for i in range(len(heating_labels))}
 
 app.layout = html.Div([
     html.H1("Rekonstruierte Alpha Innotec Heizkurven – Alle Angaben ohne Gewähr",
             style={"textAlign": "center", "color": "white"}),
 
     html.Div([
-        html.Label("Wähle eine Heizkurve zur Bearbeitung:", style={"color": "white"}),
-        dcc.Dropdown(
-            id='curve-selection',
-            options=[{'label': label, 'value': i} for i, label in enumerate(heating_labels)],
-            value=0,
-            clearable=False,
-            style={"width": "50%", "margin": "auto"}
-        )
-    ], style={'textAlign': 'center', 'padding': '10px'}),
+        html.Div([
+            html.Label("Wähle eine Heizkurve:",
+                       className="mdl-typography--subhead", style={"color": "white"}),
+            dcc.Dropdown(
+                id='curve-selection',
+                options=[{'label': label, 'value': i}
+                         for i, label in enumerate(heating_labels)],
+                value=0,
+                clearable=False,
+                style={"margin": "auto",
+                       "padding": "10px", "color": "white"}
+            )
+        ], className="select-heatcurve-container"),
 
-    html.Div([
-        html.Label("Anzuzeigende Heizkurven:", style={"color": "white"}),
-        dcc.Checklist(
-            id='curve-toggle',
-            options=[{'label': label, 'value': i} for i, label in enumerate(heating_labels)],
-            value=[0],
-            inline=True,
-            inputStyle={"margin-right": "5px"},
-            labelStyle={"display": "inline-block", "padding": "5px", "color": "white"}
-        )
-    ], style={'textAlign': 'center', 'padding': '10px'}),
+        html.Div([
+            html.Label("Anzuzeigende Heizkurven:",
+                       className="mdl-typography--subhead", style={"color": "white"}),
+            dcc.Checklist(
+                id='curve-toggle',
+                options=[{'label': label, 'value': i}
+                         for i, label in enumerate(heating_labels)],
+                value=[0],
+                inline=True,
+                inputStyle={"margin-right": "5px"},
+                labelStyle={"display": "inline-block",
+                            "padding": "5px", "color": "white"}
+            )
+        ], style={'textAlign': 'center', 'padding': '10px'}),
+    ], className="selection-container"),
+
 
     html.Div([
         html.Div([
-            html.Label("Endpunkt (Solltemperatur bei -20°C Außentemperatur)", style={"color": "white"}),
+            html.Label(
+                "Endpunkt (Solltemperatur bei -20°C Außentemperatur)", style={"color": "white"}),
             dcc.Slider(id='endpoint-slider', min=20, max=70, step=0.5, value=50,
                        marks={i: f'{i}°C' for i in range(20, 71, 5)},
-                       tooltip={"placement": "top", "always_visible": True})
+                       tooltip={"placement": "top", "always_visible": True},
+                       updatemode='drag')
         ], style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
 
         html.Div([
             html.Label("Fußpunkt (Solltemperatur)", style={"color": "white"}),
             dcc.Slider(id='fusspunkt-slider', min=5, max=35, step=0.5, value=20,
                        marks={i: f'{i}°C' for i in range(5, 36, 5)},
-                       tooltip={"placement": "top", "always_visible": True})
+                       tooltip={"placement": "top", "always_visible": True},
+                       updatemode='drag')
         ], style={'width': '48%', 'display': 'inline-block', 'padding': '10px'}),
     ], style={'display': 'flex', 'justify-content': 'center'}),
 
     dcc.Graph(id='heating-curve-graph', config={'displayModeBar': False})
-], style={"backgroundColor": background_color, "padding": "20px"})
+], style={"backgroundColor": background_color, "padding": "20px", "display": "flex", "flex-direction": "column", "justify-content": "center"})
 
-@app.callback(
+
+@ app.callback(
     [Output('endpoint-slider', 'value'), Output('fusspunkt-slider', 'value')],
     [Input('curve-selection', 'value')]
 )
 def update_sliders(selected_curve):
     return curve_values[selected_curve]['endpoint'], curve_values[selected_curve]['footpoint']
 
-@app.callback(
+
+@ app.callback(
     Output('heating-curve-graph', 'figure'),
     [Input('curve-selection', 'value'),
      Input('curve-toggle', 'value'),
@@ -101,15 +143,17 @@ def update_sliders(selected_curve):
     State('curve-selection', 'value')
 )
 def update_graph(selected_curve, active_curves, endpoint, fusspunkt, current_selection):
-    curve_values[current_selection] = {'endpoint': endpoint, 'footpoint': fusspunkt}
-    
+    curve_values[current_selection] = {
+        'endpoint': endpoint, 'footpoint': fusspunkt}
+
     T_out_base = np.linspace(-55, 20, 400)
     fig = go.Figure()
-    
+
     for i in active_curves:
         ep = curve_values[i]['endpoint']
         fp = curve_values[i]['footpoint']
-        T_out_shifted, T_set_shifted = heating_curve_shifted(T_out_base, ep, fp)
+        T_out_shifted, T_set_shifted = heating_curve_shifted(
+            T_out_base, ep, fp)
         endpoint_x = -20
         endpoint_y = np.interp(endpoint_x, T_out_shifted, T_set_shifted)
 
@@ -144,10 +188,12 @@ def update_graph(selected_curve, active_curves, endpoint, fusspunkt, current_sel
         line=dict(dash='dash', color=dashed_line_color, width=1),
         name='Fußpunkt-Verschiebung'
     ))
-    
+
     fig.update_layout(
-        xaxis=dict(title="Außentemperatur (°C)", range=[-20, 40], tickmode="array", tickvals=list(range(-20, 45, 5)), fixedrange=True, tickfont=dict(color='white')),
-        yaxis=dict(title="Solltemperatur (°C)", range=[0, 70], fixedrange=True, tickfont=dict(color='white')),
+        xaxis=dict(title="Außentemperatur (°C)", range=[-20, 40], tickmode="array", tickvals=list(
+            range(-20, 45, 5)), fixedrange=True, tickfont=dict(color='white')),
+        yaxis=dict(title="Solltemperatur (°C)", range=[
+                   0, 70], fixedrange=True, tickfont=dict(color='white')),
         template=dark_theme,
         plot_bgcolor=background_color,
         paper_bgcolor=background_color,
@@ -156,6 +202,7 @@ def update_graph(selected_curve, active_curves, endpoint, fusspunkt, current_sel
     )
 
     return fig
+
 
 if __name__ == '__main__':
     app.run_server(debug=False)
