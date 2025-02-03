@@ -321,4 +321,4 @@ def update_sliders_and_import(selected_curve, contents):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
