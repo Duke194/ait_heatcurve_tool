@@ -33,3 +33,15 @@ body {
 .select-heatcurve-container {
   width: 300px;
 }
+
+.file-handling-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.button-container {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}

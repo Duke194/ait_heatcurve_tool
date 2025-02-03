@@ -2,13 +2,17 @@ import dash
 from dash import dcc, html, Input, Output, State
 import plotly.graph_objects as go
 import numpy as np
+import pandas as pd
+import csv
+import base64
+import io
 
 # Dark Mode Template & Colors
 dark_theme = "plotly_dark"
 background_color = "#1E1E1E"
 curve_colors = ["#FF4343", "#FF9100", "#FFEA00",  "#FF3DF2"]
 dashed_line_color = "#AAAAAA"
-vertical_zero_line_color = "#3BAAFF"  # 0°C Linie
+vertical_zero_line_color = "#3BAAFF"  # 0°C Line
 
 heating_labels = [
     "Rücklaufsolltemperatur Heizkreis",
@@ -16,6 +20,11 @@ heating_labels = [
     "Vorlaufsolltemperatur Mischkreis 2",
     "Vorlaufsolltemperatur Mischkreis 3"
 ]
+
+# Storage for heating curve values
+curve_values = {i: {'endpoint': 50, 'footpoint': 20}
+                for i in range(len(heating_labels))}
+
 
 # Optimized heating curve parameters
 a, b, c, d = -346.13, -7.05, -0.055, 247.26
@@ -48,7 +57,7 @@ def heating_curve_shifted(T_out_base, endpoint_base, fusspunkt):
     """
     Shifts the heating curve based on the given fusspunkt and returns the shifted outdoor temperatures and setpoint temperatures.
     """
-    
+
     fusspunkt_base = 20
     T_set_base = np.array([extended_heating_curve(
         t, endpoint_base, fusspunkt_base) for t in T_out_base])
@@ -62,9 +71,45 @@ def heating_curve_shifted(T_out_base, endpoint_base, fusspunkt):
     return T_out_shifted, T_set_shifted
 
 
+def export_heating_curves():
+    """
+    Exports the current heating curve settings as a CSV.
+    Format: name, ep, fp
+    """
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["name", "ep", "fp"])  # Spaltenüberschriften
+    for i, label in enumerate(heating_labels):
+        writer.writerow([label, curve_values[i]['endpoint'],
+                        curve_values[i]['footpoint']])
+
+    return output.getvalue()
+
+
+def import_heating_curves(contents):
+    """
+    Imports heating curve settings from a CSV file.
+    Updates the global values in `curve_values`.
+    """
+    try:
+        content_type, content_string = contents.split(',')
+        decoded = base64.b64decode(content_string)
+        df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+
+        for i, row in df.iterrows():
+            # Sicherstellen, dass nicht mehr Werte als Heizkreise vorhanden sind
+            if i < len(heating_labels):
+                curve_values[i]['endpoint'] = float(row["ep"])
+                curve_values[i]['footpoint'] = float(row["fp"])
+
+        return "✅ Erfolgreich importiert!"
+    except Exception as e:
+        return f"❌ Fehler beim Import: {str(e)}"
+
+
 # Dash App
 app = dash.Dash(__name__)
-server = app.server  # WICHTIG für Render-Hosting
+server = app.server  # IMPORTANT for render hosting
 
 app.index_string = '''
 <!DOCTYPE html>
@@ -90,9 +135,6 @@ app.index_string = '''
 </html>
 '''
 
-# Storage for heating curve values
-curve_values = {i: {'endpoint': 50, 'footpoint': 20}
-                for i in range(len(heating_labels))}
 
 app.layout = html.Div([
     html.H1("Rekonstruierte Alpha Innotec Heizkurven – Alle Angaben ohne Gewähr",
@@ -127,6 +169,20 @@ app.layout = html.Div([
                             "padding": "5px", "color": "white"}
             )
         ], style={'textAlign': 'center', 'padding': '10px'}),
+
+        html.Div([
+            html.Div([
+                html.Button("Heizkurven exportieren", id="export-button",
+                            className="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"),
+                # Download-Komponente für CSV
+                dcc.Download(id="download-dataframe-csv"),
+                dcc.Upload(id="upload-data", children=html.Button("Heizkurven importieren", className="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"),
+                           multiple=False, style={'display': 'inline-block'}),
+            ], className='button-container'),
+
+            html.Div(id="file-feedback",
+                     style={"color": "white", "textAlign": "center", "marginTop": "10px"}),
+        ], className="file-handling-container")
     ], className="selection-container"),
 
 
@@ -235,6 +291,28 @@ def update_graph(selected_curve, active_curves, endpoint, fusspunkt, current_sel
     )
 
     return fig
+
+
+@app.callback(
+    Output("download-dataframe-csv", "data"),
+    Input("export-button", "n_clicks"),
+    prevent_initial_call=True
+)
+def handle_export(n_clicks):
+    return dcc.send_string(export_heating_curves(), "ait_lux_heating_curves.csv")
+
+
+# Callback for import: upload file and process data
+@app.callback(
+    Output("file-feedback", "children"),
+    Input("upload-data", "contents"),
+    prevent_initial_call=True
+)
+def handle_import(contents):
+    if not contents:
+        return "❌ Keine Datei hochgeladen!"
+
+    return import_heating_curves(contents)
 
 
 if __name__ == '__main__':

@@ -2,3 +2,4 @@ dash
 gunicorn
 numpy
 plotly
+pandas
