@@ -1,5 +1,5 @@
 import dash
-from dash import dcc, html, Input, Output, State
+from dash import dcc, html, Input, Output, State, ctx
 import plotly.graph_objects as go
 import numpy as np
 import pandas as pd
@@ -210,14 +210,6 @@ app.layout = html.Div([
 
 
 @ app.callback(
-    [Output('endpoint-slider', 'value'), Output('fusspunkt-slider', 'value')],
-    [Input('curve-selection', 'value')]
-)
-def update_sliders(selected_curve):
-    return curve_values[selected_curve]['endpoint'], curve_values[selected_curve]['footpoint']
-
-
-@ app.callback(
     Output('heating-curve-graph', 'figure'),
     [Input('curve-selection', 'value'),
      Input('curve-toggle', 'value'),
@@ -302,18 +294,31 @@ def handle_export(n_clicks):
     return dcc.send_string(export_heating_curves(), "ait_lux_heating_curves.csv")
 
 
-# Callback for import: upload file and process data
+# Callback for import: upload file and process data | also callback for sliders when selecting different curve
 @app.callback(
-    Output("file-feedback", "children"),
-    Input("upload-data", "contents"),
+    [Output("endpoint-slider", "value"),
+     Output("fusspunkt-slider", "value"),
+     Output("file-feedback", "children")],
+    [Input("curve-selection", "value"),
+     Input("upload-data", "contents")],
     prevent_initial_call=True
 )
-def handle_import(contents):
-    if not contents:
-        return "❌ Keine Datei hochgeladen!"
+def update_sliders_and_import(selected_curve, contents):
+    """
+    Updates the slider values based on:
+    - Selection of a heating curve (Dropdown)
+    - Import of a CSV file (if uploaded)
+    """
+    if ctx.triggered_id == "upload-data" and contents:
+        feedback = import_heating_curves(contents)
+    else:
+        feedback = dash.no_update
 
-    return import_heating_curves(contents)
+    updated_ep = curve_values[selected_curve]['endpoint']
+    updated_fp = curve_values[selected_curve]['footpoint']
+
+    return updated_ep, updated_fp, feedback
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
