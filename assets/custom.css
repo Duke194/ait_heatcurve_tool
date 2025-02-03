@@ -45,3 +45,8 @@ body {
   flex-direction: row;
   gap: 12px;
 }
+
+#endpoint-slider,
+#fusspunkt-slider {
+  padding: 45px 10px 10px 10px !important;
+}
