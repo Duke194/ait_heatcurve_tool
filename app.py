@@ -3,7 +3,7 @@ from dash import dcc, html, Input, Output, State
 import plotly.graph_objects as go
 import numpy as np
 
-# Dark Mode Template & Farben
+# Dark Mode Template & Colors
 dark_theme = "plotly_dark"
 background_color = "#1E1E1E"
 curve_colors = ["#FF4343", "#FF9100", "#FFEA00",  "#FF3DF2"]
@@ -17,22 +17,48 @@ heating_labels = [
     "Vorlaufsolltemperatur Mischkreis 3"
 ]
 
+# Optimized heating curve parameters
+a, b, c, d = -346.13, -7.05, -0.055, 247.26
 
-def heating_curve_base(T_out, endpoint_base, fusspunkt_base=20):
-    T_fp = fusspunkt_base
-    T_ep = endpoint_base
+
+def refined_smooth_heating_curve(T_out, EP, FP):
+    T_fp = FP
+    T_ep = EP
     tau = (T_fp + 20) / 3
     norm_factor = 1 - np.exp((-20 - T_fp) / tau)
-    return T_fp + (T_ep - T_fp) * (1 - np.exp((T_out - T_fp) / tau)) / norm_factor
+
+    return T_fp + (T_ep - T_fp) * (1 - np.exp((T_out - T_fp) / (a + b * (T_out - T_fp) + c * (T_out - T_fp) ** 2 + d * np.exp(T_out / 50)))) / norm_factor
+
+
+def extended_heating_curve(T_out, EP, FP):
+    """
+    Calculates an extended heating curve for Alpha Innotec heat pump controllers by Luxtronik, 
+    using a refined smooth heating curve for temperatures above -20°C and an approximation for lower temperatures.
+    """
+    if T_out >= -20:
+        return refined_smooth_heating_curve(T_out, EP, FP)
+    else:
+        T_ref = -20
+        slope = (refined_smooth_heating_curve(T_ref, EP, FP) -
+                 refined_smooth_heating_curve(T_ref - 1, EP, FP))
+        return refined_smooth_heating_curve(T_ref, EP, FP) + slope * (T_out - T_ref)
 
 
 def heating_curve_shifted(T_out_base, endpoint_base, fusspunkt):
+    """
+    Shifts the heating curve based on the given fusspunkt and returns the shifted outdoor temperatures and setpoint temperatures.
+    """
+    
     fusspunkt_base = 20
-    T_set_base = heating_curve_base(T_out_base, endpoint_base, fusspunkt_base)
+    T_set_base = np.array([extended_heating_curve(
+        t, endpoint_base, fusspunkt_base) for t in T_out_base])
+
     shift_x = fusspunkt - fusspunkt_base
     shift_y = fusspunkt - fusspunkt_base
+
     T_out_shifted = T_out_base + shift_x
     T_set_shifted = np.clip(T_set_base + shift_y, 0, 70)
+
     return T_out_shifted, T_set_shifted
 
 
@@ -64,7 +90,7 @@ app.index_string = '''
 </html>
 '''
 
-# Speicher für Heizkurven-Werte
+# Storage for heating curve values
 curve_values = {i: {'endpoint': 50, 'footpoint': 20}
                 for i in range(len(heating_labels))}
 
