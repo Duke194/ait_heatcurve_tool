@@ -1,6 +1,6 @@
 # Reverse-Engineered Alpha Innotec Heating Curve Calculator (NOT RELATED TO ALPHA INNOTEC OR NOVELAN)
 🔗 Try it Online: https://ait-heatcurve-tool.onrender.com  
-![Preview](https://github.com/Duke194/ait_heatcurve_tool/blob/main/ait_heatcurve_tool.gif?raw=true)
+![Preview](https://github.com/Duke194/ait_heatcurve_tool/blob/main/assets/img/ait_heatcurve_tool.gif?raw=true)
 
 ## Englisch  
 This tool is a reverse-engineered calculator designed to determine the heating curves used in Alpha Innotec heat pumps with the Luxtronik 2.0 controller. It allows users to adjust the endpoint (target temperature at -20°C) and the footpoint (parallel shift of the curve) to visualize the resulting heating curve.  
@@ -34,7 +34,7 @@ If you prefer to run the app locally instead of using the hosted version, follow
 
 ### **1️⃣ Clone the repository**  
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/alpha-innotec-heizkurven.git
+git clone https://github.com/Duke194/alpha-innotec-heizkurven.git
 cd alpha-innotec-heizkurven
 ```
 
@@ -58,7 +58,7 @@ Falls du die App lieber lokal ausführen möchtest, anstatt die gehostete Versio
 
 ### **1️⃣ Repository klonen**  
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/alpha-innotec-heizkurven.git
+git clone https://github.com/Duke194/alpha-innotec-heizkurven.git
 cd alpha-innotec-heizkurven
 ```
 

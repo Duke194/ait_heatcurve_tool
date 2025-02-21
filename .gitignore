@@ -1,4 +1,5 @@
 saved_settings/
+assets/vid/*.mp4
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
